@@ -1,5 +1,5 @@
 import {
-  CMazeState,
+  CMazeState, ESide,
   skEnterCol,
   skEnterRow,
   skMazeCols,
@@ -14,10 +14,20 @@ export function main() {
     click();
   })
 
-  document.querySelector('#seedNumber').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  document.querySelector('#seedNumber').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       click();
     }
+  });
+
+  document.querySelector('#brSearch').addEventListener('keyup', (e) => {
+    search();
+  });
+  document.querySelector('#trSearch').addEventListener('keyup', (e) => {
+    search();
+  });
+  document.querySelector('#startSearch').addEventListener('keyup', (e) => {
+    search();
   });
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -30,6 +40,7 @@ export function main() {
   }
   document.querySelector('#seedNumber').value = seed;
   click();
+  search();
 }
 
 export function click() {
@@ -40,8 +51,128 @@ export function click() {
   maze.initialize();
   maze.generateObstacles();
   // document.querySelector('#output').innerHTML = maze.toDebugString();
+  const canvas = document.querySelector('#canvasOut');
+  drawMaze(canvas, maze);
 
-  drawMaze(maze);
+  let outEle = document.querySelector('#out');
+  outEle.innerHTML = `
+  Game's length: ${maze.path.length}<br />
+  Acutal length: ${maze.calcFastestPath().length}
+  `;
+}
+
+
+export function search() {
+  const startStr = document.querySelector('#startSearch').value.toLowerCase();
+  const trStr = document.querySelector('#trSearch').value.toLowerCase();
+  const brStr = document.querySelector('#brSearch').value.toLowerCase();
+
+  function strToFlags(str) {
+    let flags = {
+      top: false,
+      bottom: false,
+      left: false,
+      right: false
+    };
+    if (/[wi]/.exec(str)) {
+      flags.top = true;
+    }
+    if (/[aj]/.exec(str)) {
+      flags.left = true;
+    }
+    if (/[sk]/.exec(str)) {
+      flags.bottom = true;
+    }
+    if (/[dl]/.exec(str)) {
+      flags.right = true;
+    }
+    return flags;
+  }
+
+  const start = strToFlags(startStr);
+  const tr = strToFlags(trStr);
+  const br = strToFlags(brStr);
+
+  let matchingMazes = [];
+
+  for (let i = 0; i < seeds.length; i++) {
+    const maze = new CMazeState();
+    maze.reset(seeds[i]);
+    maze.initialize();
+    maze.generateObstacles();
+    let match = true;
+
+    const trCell = maze.getCell(skMazeCols - 2, 1);
+    const brCell = maze.getCell(skMazeCols - 2, skMazeRows - 2);
+    const startCell = maze.getCell(skEnterCol, skEnterRow);
+
+    if (
+      trCell.openTop !== tr.top ||
+      trCell.openBottom !== tr.bottom ||
+      trCell.openLeft !== tr.left ||
+      trCell.openRight !== tr.right
+    ) {
+      match = false;
+    } else if (
+      brCell.openTop !== br.top ||
+      brCell.openBottom !== br.bottom ||
+      brCell.openLeft !== br.left ||
+      brCell.openRight !== br.right
+    ) {
+      match = false;
+    } else if (
+      startCell.openTop !== start.top ||
+      startCell.openBottom !== start.bottom ||
+      startCell.openLeft !== start.left ||
+      startCell.openRight !== start.right
+    ) {
+      match = false;
+    }
+
+    if (match) {
+      matchingMazes.push([i, maze]);
+    }
+  }
+
+  // set up the example of what you're searching
+  let searchStatusOut = document.querySelector('#searchStatusOut');
+  let maze = new CMazeState(true);
+  const trCell = maze.getCell(skMazeCols - 2, 1);
+  trCell.openTop = tr.top;
+  trCell.openBottom = tr.bottom;
+  trCell.openLeft = tr.left;
+  trCell.openRight = tr.right;
+
+  const brCell = maze.getCell(skMazeCols - 2, skMazeRows - 2);
+  brCell.openTop = br.top;
+  brCell.openBottom = br.bottom;
+  brCell.openLeft = br.left;
+  brCell.openRight = br.right;
+
+  const startCell = maze.getCell(skEnterCol, skEnterRow);
+  startCell.openTop = start.top;
+  startCell.openBottom = start.bottom;
+  startCell.openLeft = start.left;
+  startCell.openRight = start.right;
+  drawMaze(searchStatusOut, maze, true);
+
+  let searchOut = document.querySelector('#searchOut');
+  searchOut.innerHTML = '';
+  document.querySelector('#searchResultCount').innerHTML = `Found ${matchingMazes.length} matches`;
+  for (let i = 0; i < Math.min(matchingMazes.length, 10); i++) {
+    let [seed, maze] = matchingMazes[i];
+    let canvas = document.createElement('canvas');
+    drawMaze(canvas, maze);
+
+    let div = document.createElement('div');
+    div.className = 'search-result-div'
+    let infoDiv = document.createElement('div');
+    infoDiv.innerText = `${seed}`;
+    div.append(infoDiv);
+    div.append(canvas);
+
+    searchOut.append(div);
+  }
 }
 
 const cellSize = 40;
@@ -120,8 +251,7 @@ function drawPath(path, ctx) {
   }
 }
 
-export function drawMaze(maze) {
-  const canvas = document.querySelector('#canvasOut');
+export function drawMaze(canvas, maze, noPath) {
   canvas.width = skMazeCols * cellSize;
   canvas.height = skMazeRows * cellSize;
   const ctx = canvas.getContext("2d");
@@ -209,24 +339,20 @@ export function drawMaze(maze) {
     }
   }
 
-  // Then the calculated path
-  ctx.strokeStyle = 'rgba(150, 0, 150, 0.25)';
-  ctx.fillStyle = 'rgba(150, 0, 150, 0.25)';
-  ctx.lineWidth = 3;
-  drawPath(maze.path, ctx);
+  if (!noPath) {
+    // Then the calculated path
+    ctx.strokeStyle = 'rgba(150, 0, 150, 0.25)';
+    ctx.fillStyle = 'rgba(150, 0, 150, 0.25)';
+    ctx.lineWidth = 3;
+    drawPath(maze.path, ctx);
 
-  // then the fastest path
-  ctx.strokeStyle = '#0F0';
-  ctx.fillStyle = '#0F0';
-  ctx.lineWidth = 3;
-  let fastestPath = maze.calcFastestPath();
-  drawPath(fastestPath, ctx);
-
-  let outEle = document.querySelector('#out');
-  outEle.innerHTML = `
-  Game's length: ${maze.path.length}<br />
-  Acutal length: ${fastestPath.length}
-  `;
+    // then the fastest path
+    ctx.strokeStyle = '#0F0';
+    ctx.fillStyle = '#0F0';
+    ctx.lineWidth = 3;
+    let fastestPath = maze.calcFastestPath();
+    drawPath(fastestPath, ctx);
+  }
 }
 
 function matrixTimesVector(matrix, vector) {
