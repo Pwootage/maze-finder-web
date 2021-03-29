@@ -56,8 +56,8 @@ export function click() {
 
   let outEle = document.querySelector('#out');
   outEle.innerHTML = `
-  Game's length: ${maze.path.length}<br />
-  Acutal length: ${maze.calcFastestPath().length}
+  Game's length (no pool shortcuts, pink): ${maze.path.length}<br />
+  Actual length (with pool shortcuts, green): ${maze.calcFastestPath().length}
   `;
 }
 
