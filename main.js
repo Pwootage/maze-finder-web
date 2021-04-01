@@ -58,7 +58,7 @@ export function click() {
   outEle.innerHTML = `
   Game's length (no pool shortcuts, pink): ${maze.path.length}<br />
   Actual length (with pool shortcuts, green): ${maze.calcFastestPath().length}<br />
-  Identifier: ${maze.getIdentifier()}<br />`;
+  `;
   for (let t of item) {
     outEle.innerHTML += `Claris Maze: ${t.name}<br />`;
   }
@@ -169,7 +169,7 @@ export function search() {
     let div = document.createElement('div');
     div.className = 'search-result-div'
     let infoDiv = document.createElement('div');
-    infoDiv.innerText = `${seed} - ${maze.getIdentifier()}`;
+    infoDiv.innerText = `#${seed} - `;
     for (let t of item) {
       infoDiv.innerHTML += ` Claris Maze: ${t.name}`;
     }
