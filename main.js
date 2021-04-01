@@ -53,13 +53,16 @@ export function click() {
   // document.querySelector('#output').innerHTML = maze.toDebugString();
   const canvas = document.querySelector('#canvasOut');
   drawMaze(canvas, maze);
-  let item = clarisMazes.filter( (m) => m.identifier == maze.getIdentifier() &&  m.squares == maze.calcFastestPath().length);
+  let item = clarisMazes.filter( (m) => m.identifier == maze.getIdentifier() &&  m.squares == maze.calcFastestPath().length || (m.correction != null && m.correction == seed) );
   let outEle = document.querySelector('#out');
   outEle.innerHTML = `
   Game's length (no pool shortcuts, pink): ${maze.path.length}<br />
   Actual length (with pool shortcuts, green): ${maze.calcFastestPath().length}<br />
   `;
   for (let t of item) {
+      if (t.correction != null && t.correction != seed) {
+         continue;
+      }
     outEle.innerHTML += `Claris Maze: ${t.name}<br />`;
   }
 }
@@ -165,7 +168,7 @@ export function search() {
     let [seed, maze] = matchingMazes[i];
     let canvas = document.createElement('canvas');
     drawMaze(canvas, maze);
-    let item = clarisMazes.filter( (m) => m.identifier == maze.getIdentifier() &&  m.squares == maze.calcFastestPath().length);
+    let item = clarisMazes.filter( (m) => m.identifier == maze.getIdentifier() &&  m.squares == maze.calcFastestPath().length || (m.correction !== null && m.correction == seed) );
     let div = document.createElement('div');
     div.className = 'search-result-div'
     let infoDiv = document.createElement('div');
