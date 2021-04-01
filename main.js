@@ -174,6 +174,9 @@ export function search() {
     let infoDiv = document.createElement('div');
     infoDiv.innerText = `#${seed} - `;
     for (let t of item) {
+      if (t.correction != null && t.correction != seed) {
+        continue;
+      }
       infoDiv.innerHTML += ` Claris Maze: ${t.name}`;
     }
     div.append(infoDiv);
