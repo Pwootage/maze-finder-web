@@ -7,8 +7,8 @@ import {
   skTargetCol,
   skTargetRow
 } from './lib/CMazeState.js';
+import {clarisMazes} from './lib/ClarisMazes.js';
 import {seeds} from './lib/seeds.js';
-
 export function main() {
   document.querySelector('#clicker').addEventListener('click', () => {
     click();
@@ -53,12 +53,15 @@ export function click() {
   // document.querySelector('#output').innerHTML = maze.toDebugString();
   const canvas = document.querySelector('#canvasOut');
   drawMaze(canvas, maze);
-
+  let item = clarisMazes.filter( (m) => m.identifier == maze.getIdentifier() &&  m.squares == maze.calcFastestPath().length);
   let outEle = document.querySelector('#out');
   outEle.innerHTML = `
   Game's length (no pool shortcuts, pink): ${maze.path.length}<br />
-  Actual length (with pool shortcuts, green): ${maze.calcFastestPath().length}
-  `;
+  Actual length (with pool shortcuts, green): ${maze.calcFastestPath().length}<br />
+  Identifier: ${maze.getIdentifier()}<br />`;
+  for (let t of item) {
+    outEle.innerHTML += `Claris Maze: ${t.name}<br />`;
+  }
 }
 
 
@@ -92,7 +95,6 @@ export function search() {
   const start = strToFlags(startStr);
   const tr = strToFlags(trStr);
   const br = strToFlags(brStr);
-
   let matchingMazes = [];
 
   for (let i = 0; i < seeds.length; i++) {
@@ -163,11 +165,14 @@ export function search() {
     let [seed, maze] = matchingMazes[i];
     let canvas = document.createElement('canvas');
     drawMaze(canvas, maze);
-
+    let item = clarisMazes.filter( (m) => m.identifier == maze.getIdentifier() &&  m.squares == maze.calcFastestPath().length);
     let div = document.createElement('div');
     div.className = 'search-result-div'
     let infoDiv = document.createElement('div');
-    infoDiv.innerText = `${seed}`;
+    infoDiv.innerText = `${seed} - ${maze.getIdentifier()}`;
+    for (let t of item) {
+      infoDiv.innerHTML += ` Claris Maze: ${t.name}`;
+    }
     div.append(infoDiv);
     div.append(canvas);
 
